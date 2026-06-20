@@ -3,13 +3,15 @@ from django.db.models import Count, Q
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import generics, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.authtoken.models import Token
+from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
 from .models import Categoria, Local, Objeto
 from .permissions import IsAdminOrReadOnly, IsOwnerOrAdmin, usuario_admin
 from .serializers import (
     AuthRespostaSerializer,
+    AdminUsuarioSerializer,
     CategoriaSerializer,
     ConfirmarResetSenhaSerializer,
     LocalSerializer,
@@ -84,7 +86,20 @@ class TrocaSenhaAPIView(generics.GenericAPIView):
         serializer = self.get_serializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response({"detail": "Senha alterada. Faca login novamente."})
+        return Response({"detail": "Senha alterada com sucesso."})
+
+
+class DesativarContaAPIView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = MensagemSerializer
+
+    @extend_schema(request=None, responses={204: None})
+    def post(self, request):
+        user = request.user
+        user.is_active = False
+        user.save(update_fields=["is_active"])
+        Token.objects.filter(user=user).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class SolicitarResetSenhaAPIView(generics.GenericAPIView):
@@ -108,6 +123,14 @@ class ConfirmarResetSenhaAPIView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({"detail": "Senha redefinida com sucesso."})
+
+
+class UsuarioAdminViewSet(viewsets.ModelViewSet):
+    serializer_class = AdminUsuarioSerializer
+    permission_classes = [IsAdminUser]
+
+    def get_queryset(self):
+        return User.objects.select_related("perfil").order_by("first_name", "username")
 
 
 @extend_schema_view(

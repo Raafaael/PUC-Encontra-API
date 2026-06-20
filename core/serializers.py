@@ -31,6 +31,117 @@ class UsuarioSerializer(serializers.ModelSerializer):
         return obj.get_full_name() or obj.username
 
 
+class AdminUsuarioSerializer(serializers.ModelSerializer):
+    perfil = PerfilSerializer(read_only=True)
+    nome = serializers.SerializerMethodField()
+    matricula = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    telefone = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    tipo = serializers.ChoiceField(choices=Perfil.TIPO_CHOICES, write_only=True, required=False)
+    password = serializers.CharField(write_only=True, required=False, min_length=8)
+    password_confirm = serializers.CharField(write_only=True, required=False, min_length=8)
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+            "nome",
+            "perfil",
+            "is_staff",
+            "is_active",
+            "matricula",
+            "telefone",
+            "tipo",
+            "password",
+            "password_confirm",
+        ]
+        read_only_fields = ["id", "nome", "perfil"]
+
+    def get_nome(self, obj) -> str:
+        return obj.get_full_name() or obj.username
+
+    def validate_username(self, value):
+        queryset = User.objects.filter(username__iexact=value)
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+        if queryset.exists():
+            raise serializers.ValidationError("Este nome de usuario ja esta em uso.")
+        return value
+
+    def validate_email(self, value):
+        queryset = User.objects.filter(email__iexact=value)
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+        if queryset.exists():
+            raise serializers.ValidationError("Este e-mail ja esta em uso.")
+        return value
+
+    def validate(self, attrs):
+        password = attrs.get("password")
+        password_confirm = attrs.get("password_confirm")
+
+        if self.instance is None and not password:
+            raise serializers.ValidationError({"password": "Informe uma senha."})
+        if password or password_confirm:
+            if password != password_confirm:
+                raise serializers.ValidationError({"password_confirm": "As senhas nao conferem."})
+            user = self.instance or User(username=attrs.get("username"), email=attrs.get("email"))
+            password_validation.validate_password(password, user)
+
+        return attrs
+
+    def _save_perfil(self, user, attrs):
+        tipo = attrs.pop("tipo", None)
+        matricula = attrs.pop("matricula", None)
+        telefone = attrs.pop("telefone", None)
+
+        perfil_defaults = {}
+        if tipo is not None:
+            perfil_defaults["tipo"] = tipo
+            user.is_staff = tipo == Perfil.TIPO_ADMIN
+            user.save(update_fields=["is_staff"])
+        if matricula is not None:
+            perfil_defaults["matricula"] = matricula
+        if telefone is not None:
+            perfil_defaults["telefone"] = telefone
+
+        if perfil_defaults:
+            Perfil.objects.update_or_create(user=user, defaults=perfil_defaults)
+
+    def create(self, validated_data):
+        password = validated_data.pop("password")
+        validated_data.pop("password_confirm", None)
+        perfil_data = {
+            "tipo": validated_data.pop("tipo", Perfil.TIPO_ADMIN if validated_data.get("is_staff", True) else Perfil.TIPO_USUARIO),
+            "matricula": validated_data.pop("matricula", ""),
+            "telefone": validated_data.pop("telefone", ""),
+        }
+        user = User.objects.create_user(**validated_data, password=password)
+        self._save_perfil(user, perfil_data)
+        return user
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop("password", None)
+        validated_data.pop("password_confirm", None)
+        perfil_data = {
+            key: validated_data.pop(key)
+            for key in ["tipo", "matricula", "telefone"]
+            if key in validated_data
+        }
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        if password:
+            instance.set_password(password)
+        instance.save()
+
+        self._save_perfil(instance, perfil_data)
+        return instance
+
+
 class MensagemSerializer(serializers.Serializer):
     detail = serializers.CharField()
 
@@ -144,7 +255,6 @@ class TrocaSenhaSerializer(serializers.Serializer):
         user = self.context["request"].user
         user.set_password(self.validated_data["nova_senha"])
         user.save(update_fields=["password"])
-        Token.objects.filter(user=user).delete()
         return user
 
 
