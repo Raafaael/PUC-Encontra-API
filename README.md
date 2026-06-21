@@ -4,7 +4,7 @@ Backend do PUC-Encontra, uma plataforma de achados e perdidos para o ambiente da
 
 ## Integrantes
 
-- Dante Navaza
+- Dante Navaza 2321406
 - Rafael Soares
 
 ## Links
