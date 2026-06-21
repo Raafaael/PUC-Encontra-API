@@ -147,6 +147,7 @@ class ObjetoViewSet(viewsets.ModelViewSet):
             .all()
         )
 
+        # Admin enxerga toda a fila; usuarios comuns veem itens ativos e os proprios pendentes.
         if usuario_admin(user):
             pass
         elif user.is_authenticated:
