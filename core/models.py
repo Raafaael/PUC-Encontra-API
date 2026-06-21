@@ -103,6 +103,7 @@ class Objeto(models.Model):
     data_ocorrencia = models.DateField()
     ponto_referencia = models.CharField(max_length=200, blank=True)
     contato = models.CharField(max_length=120, blank=True)
+    imagem = models.ImageField(upload_to="objetos/", blank=True)
     imagem_url = models.URLField(blank=True)
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)

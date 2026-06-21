@@ -322,6 +322,7 @@ class ObjetoSerializer(serializers.ModelSerializer):
     local_nome = serializers.CharField(source="local.nome", read_only=True)
     tipo_display = serializers.CharField(source="get_tipo_display", read_only=True)
     status_display = serializers.CharField(source="get_status_display", read_only=True)
+    imagem_exibicao = serializers.SerializerMethodField()
 
     class Meta:
         model = Objeto
@@ -341,8 +342,17 @@ class ObjetoSerializer(serializers.ModelSerializer):
             "data_ocorrencia",
             "ponto_referencia",
             "contato",
+            "imagem",
             "imagem_url",
+            "imagem_exibicao",
             "criado_em",
             "atualizado_em",
         ]
-        read_only_fields = ["id", "usuario", "criado_em", "atualizado_em"]
+        read_only_fields = ["id", "usuario", "imagem_exibicao", "criado_em", "atualizado_em"]
+
+    def get_imagem_exibicao(self, obj):
+        if obj.imagem:
+            request = self.context.get("request")
+            url = obj.imagem.url
+            return request.build_absolute_uri(url) if request else url
+        return obj.imagem_url
