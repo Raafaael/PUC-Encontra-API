@@ -15,6 +15,7 @@ urlpatterns = [
 ]
 
 if settings.SERVE_MEDIA:
+    # Usado no ambiente local para demonstrar uploads sem depender de storage externo.
     urlpatterns += [
         re_path(r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT}),
     ]

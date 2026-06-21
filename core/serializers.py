@@ -351,6 +351,7 @@ class ObjetoSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "usuario", "imagem_exibicao", "criado_em", "atualizado_em"]
 
     def get_imagem_exibicao(self, obj):
+        # O frontend roda em outra porta, entao uploads locais precisam voltar como URL absoluta.
         if obj.imagem:
             request = self.context.get("request")
             url = obj.imagem.url

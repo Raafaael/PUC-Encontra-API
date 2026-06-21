@@ -179,6 +179,7 @@ class ObjetoViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action == "create":
+            # Criar solicitacao sempre exige login para vincular o item ao usuario correto.
             return [IsAuthenticated()]
         return super().get_permissions()
 
@@ -187,6 +188,7 @@ class ObjetoViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated])
     def meus(self, request):
+        # A tela "Meus Registros" consome este atalho para mostrar somente itens do usuario logado.
         queryset = self.filter_queryset(self.get_queryset().filter(usuario=request.user))
         page = self.paginate_queryset(queryset)
         if page is not None:
