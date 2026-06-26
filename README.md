@@ -4,16 +4,13 @@ Backend do PUC-Encontra, uma plataforma de achados e perdidos para o ambiente da
 
 ## Integrantes
 
-- Dante Navaza 2321406
-- Rafael Soares
+- Dante Navaza - 2321406
+- Rafael Soares - 2320470
 
 ## Links
 
-- Repositorio do backend: [https://github.com/Raafaael/PUC-Encontra-API](https://github.com/Raafaael/PUC-Encontra-API)
-- Repositorio do frontend: [https://github.com/Raafaael/PUC-Encontra-FrontEnd](https://github.com/Raafaael/PUC-Encontra-FrontEnd)
-- API local: [http://127.0.0.1:8000/api/](http://127.0.0.1:8000/api/)
-- Swagger local: [http://127.0.0.1:8000/api/docs/](http://127.0.0.1:8000/api/docs/)
-- Site backend publicado: pendente de publicacao em provedor web
+- Site backend publicado: [https://puc-encontra-api.vercel.app/](https://puc-encontra-api.vercel.app/)
+- Site frontend publicado: [https://puc-encontra-frontend.vercel.app/](https://puc-encontra-frontend.vercel.app/)
 
 ## Escopo
 
@@ -22,6 +19,7 @@ O backend foi desenvolvido em Django e Django REST Framework, sem HTML, CSS ou J
 - Cadastro, login, logout e consulta do usuario autenticado.
 - Troca de senha e fluxo de recuperacao de senha.
 - Desativacao de conta.
+- Envio de e-mail para recuperacao de senha via SMTP configuravel.
 - CRUD de objetos perdidos e encontrados.
 - CRUD administrativo de categorias.
 - CRUD administrativo de locais.
@@ -112,6 +110,13 @@ CORS_ALLOWED_ORIGINS=https://SEU-FRONTEND.vercel.app
 CSRF_TRUSTED_ORIGINS=https://SEU-BACKEND.vercel.app
 SERVE_MEDIA=False
 PASSWORD_RESET_EXPOSE_TOKEN=False
+FRONTEND_URL=https://SEU-FRONTEND.vercel.app
+SMTP_HOST=smtp-relay.brevo.com
+SMTP_PORT=587
+SMTP_USER=seu_usuario_smtp
+SMTP_PASS=sua_senha_smtp
+SMTP_FROM=seu_email_remetente
+SMTP_USE_TLS=True
 ```
 
 Depois do primeiro deploy, rode as migracoes no banco de producao usando a mesma `DATABASE_URL`:
@@ -168,6 +173,13 @@ POST /api/auth/password/reset/request/
 POST /api/auth/password/reset/confirm/
 POST /api/auth/deactivate/
 ```
+
+Recuperacao de senha:
+
+- Se `SMTP_HOST` estiver configurado, a API envia um e-mail com link para `FRONTEND_URL/redefinir-senha`.
+- Se `SMTP_HOST` estiver vazio, o Django usa backend de console e imprime a mensagem no log do servidor.
+- Em desenvolvimento, `PASSWORD_RESET_EXPOSE_TOKEN=True` tambem retorna `uid` e `token` na resposta para facilitar testes locais.
+- Em producao, use `PASSWORD_RESET_EXPOSE_TOKEN=False`.
 
 Objetos:
 
@@ -229,10 +241,20 @@ Testado localmente em 21/06/2026:
 - Upload de imagem para objeto funciona.
 - URL de imagem em `/media/...` abre localmente com `200 image/png`.
 
+Testado em producao na Vercel em 26/06/2026:
+
+- Raiz `https://puc-encontra-api.vercel.app/` redireciona para `/api/docs/`.
+- Swagger abre em `https://puc-encontra-api.vercel.app/api/docs/`.
+- `GET /api/`, `GET /api/objetos/`, `GET /api/categorias/` e `GET /api/locais/` retornaram `200`.
+- CORS respondeu corretamente para `https://puc-encontra-frontend.vercel.app`.
+- Login com `admin` e `aluno1` retornou token.
+- Admin acessou `/api/usuarios/`; usuario comum recebeu `403`, como esperado.
+- Smoke test de CRUD criou, editou, marcou como resolvido e apagou um objeto temporario.
+- Smoke test de CRUD criou e removeu categoria/local temporarios.
+
 ## O Que Nao Funcionou ou Esta Pendente
 
-- Publicacao em provedor web ainda nao foi realizada.
-- O envio real de e-mail para recuperacao de senha nao foi configurado; em desenvolvimento, o token de reset aparece na resposta para facilitar a demonstracao.
+- O envio real de e-mail para recuperacao de senha depende das variaveis SMTP configuradas no ambiente de producao.
 - O armazenamento persistente de imagens em producao ainda precisa de um storage externo. Na Vercel, o filesystem da Function nao deve ser usado para persistir uploads.
 - Ainda nao ha testes automatizados; os testes feitos foram manuais via curl, navegador e Swagger.
 
@@ -247,4 +269,4 @@ curl http://127.0.0.1:8000/api/docs/
 
 ## Observacoes Para Entrega
 
-Para atender integralmente ao PDF, antes do envio no EaD ainda e necessario publicar o backend em um provedor web e substituir o item "Site backend publicado" pelo link final.
+O backend esta publicado na Vercel em [https://puc-encontra-api.vercel.app/](https://puc-encontra-api.vercel.app/) e usa banco PostgreSQL Neon em producao.

@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, password_validation
 from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import serializers
@@ -268,6 +269,20 @@ class SolicitarResetSenhaSerializer(serializers.Serializer):
 
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
+        reset_url = f"{settings.FRONTEND_URL}/redefinir-senha?uid={uid}&token={token}"
+        send_mail(
+            subject="Redefinicao de senha - PUC Encontra",
+            message=(
+                f"Ola, {user.get_full_name() or user.username}.\n\n"
+                "Recebemos uma solicitacao para redefinir sua senha no PUC Encontra.\n"
+                "Acesse o link abaixo para escolher uma nova senha:\n\n"
+                f"{reset_url}\n\n"
+                "Se voce nao solicitou essa alteracao, ignore este e-mail."
+            ),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            fail_silently=False,
+        )
         response = {"detail": "Se o e-mail existir, enviaremos instrucoes de recuperacao."}
         if settings.PASSWORD_RESET_EXPOSE_TOKEN:
             response["reset"] = {"uid": uid, "token": token}
