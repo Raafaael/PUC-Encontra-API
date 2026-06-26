@@ -41,6 +41,7 @@ O backend foi desenvolvido em Django e Django REST Framework, sem HTML, CSS ou J
 - Token Authentication
 - Pillow para validacao de imagens
 - WhiteNoise para arquivos estaticos em ambientes de deploy
+- Cloudinary para armazenamento persistente de imagens em producao
 - PostgreSQL em producao
 
 ## Instalacao Local
@@ -105,6 +106,7 @@ Crie um projeto separado na Vercel apontando para este repositorio e configure a
 SECRET_KEY=coloque-uma-chave-grande-e-secreta
 DEBUG=False
 DATABASE_URL=postgres://usuario:senha@host:porta/banco?sslmode=require
+CLOUDINARY_URL=cloudinary://api_key:api_secret@cloud_name
 ALLOWED_HOSTS=SEU-BACKEND.vercel.app
 CORS_ALLOWED_ORIGINS=https://SEU-FRONTEND.vercel.app
 CSRF_TRUSTED_ORIGINS=https://SEU-BACKEND.vercel.app
@@ -126,7 +128,7 @@ python manage.py migrate
 python manage.py seed
 ```
 
-Na Vercel, o upload de arquivos para `/media/` nao deve ser usado como armazenamento permanente. Para a entrega, mantenha `SERVE_MEDIA=False` em producao; as imagens locais continuam funcionando apenas na demonstracao local com `SERVE_MEDIA=True`.
+Na Vercel, o upload de arquivos para `/media/` nao deve ser usado como armazenamento permanente. Em producao, configure `CLOUDINARY_URL` para que os uploads de imagem sejam salvos no Cloudinary. As imagens locais continuam funcionando apenas na demonstracao local com `SERVE_MEDIA=True`.
 
 ## Usuarios de Teste
 
@@ -240,6 +242,7 @@ Testado localmente em 21/06/2026:
 - Usuario comum recebe `403` em `/api/usuarios/`.
 - Upload de imagem para objeto funciona.
 - URL de imagem em `/media/...` abre localmente com `200 image/png`.
+- Sem `CLOUDINARY_URL`, o projeto usa armazenamento local para facilitar os testes de desenvolvimento.
 
 Testado em producao na Vercel em 26/06/2026:
 
@@ -251,11 +254,12 @@ Testado em producao na Vercel em 26/06/2026:
 - Admin acessou `/api/usuarios/`; usuario comum recebeu `403`, como esperado.
 - Smoke test de CRUD criou, editou, marcou como resolvido e apagou um objeto temporario.
 - Smoke test de CRUD criou e removeu categoria/local temporarios.
+- O armazenamento persistente de imagens em producao fica disponivel quando `CLOUDINARY_URL` esta configurada no ambiente da API.
 
 ## O Que Nao Funcionou ou Esta Pendente
 
 - O envio real de e-mail para recuperacao de senha depende das variaveis SMTP configuradas no ambiente de producao.
-- O armazenamento persistente de imagens em producao ainda precisa de um storage externo. Na Vercel, o filesystem da Function nao deve ser usado para persistir uploads.
+- Para testar upload persistente em producao, configure `CLOUDINARY_URL` na Vercel e redeploye a API.
 - Ainda nao ha testes automatizados; os testes feitos foram manuais via curl, navegador e Swagger.
 
 ## Comandos de Validacao
