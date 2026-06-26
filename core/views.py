@@ -147,13 +147,15 @@ class ObjetoViewSet(viewsets.ModelViewSet):
             .all()
         )
 
-        # Admin enxerga toda a fila; usuarios comuns veem itens ativos e os proprios pendentes.
+        # Admin enxerga toda a fila; usuarios comuns veem publicos e os proprios pendentes.
         if usuario_admin(user):
             pass
         elif user.is_authenticated:
-            queryset = queryset.filter(Q(status=Objeto.STATUS_ATIVO) | Q(usuario=user))
+            queryset = queryset.filter(
+                Q(status__in=[Objeto.STATUS_ATIVO, Objeto.STATUS_RESOLVIDO]) | Q(usuario=user)
+            )
         else:
-            queryset = queryset.filter(status=Objeto.STATUS_ATIVO)
+            queryset = queryset.filter(status__in=[Objeto.STATUS_ATIVO, Objeto.STATUS_RESOLVIDO])
 
         if self.request.query_params.get("meus") in {"1", "true", "sim"}:
             queryset = queryset.filter(usuario=user) if user.is_authenticated else queryset.none()
