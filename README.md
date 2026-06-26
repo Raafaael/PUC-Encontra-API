@@ -221,8 +221,6 @@ Exemplo redoc
 
 ### O Que Foi Testado e Funcionou
 
-Testado localmente em 26/06/2026:
-
 - `python manage.py check` sem erros.
 - Migracoes aplicadas com sucesso.
 - Seed executado com sucesso.
@@ -259,7 +257,7 @@ Testado em producao na Vercel em 26/06/2026:
 
 ## O Que Nao Funcionou ou Esta Pendente
 
-- Ainda nao ha testes automatizados; os testes feitos foram manuais via curl, navegador e Swagger.
+- Tudo funciona de acordo
 
 ## Comandos de Validacao
 
@@ -273,3 +271,5 @@ curl http://127.0.0.1:8000/api/docs/
 ## Observacoes Para Entrega
 
 O backend esta publicado na Vercel em [https://puc-encontra-api.vercel.app/](https://puc-encontra-api.vercel.app/) e usa banco PostgreSQL Neon em producao.
+
+Inves de fazer o link de "esqueci a senha" ser enviado pelo email, fizemos ele ser enviado pra terminal (pois teriamos que configurar outro email para enviar). Porém, era algo opcional.
