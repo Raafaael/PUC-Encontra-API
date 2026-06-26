@@ -24,7 +24,7 @@ O backend foi desenvolvido em Django e Django REST Framework, sem HTML, CSS ou J
 - CRUD administrativo de categorias.
 - CRUD administrativo de locais.
 - CRUD administrativo de usuarios.
-- Upload de imagem local para objetos.
+- Upload de imagem para objetos, com armazenamento local em desenvolvimento e Cloudinary em producao.
 - Consulta publica de itens ativos.
 - Area privada para "Meus Registros".
 - Fluxo administrativo para aprovar, rejeitar e resolver objetos.
@@ -254,12 +254,12 @@ Testado em producao na Vercel em 26/06/2026:
 - Admin acessou `/api/usuarios/`; usuario comum recebeu `403`, como esperado.
 - Smoke test de CRUD criou, editou, marcou como resolvido e apagou um objeto temporario.
 - Smoke test de CRUD criou e removeu categoria/local temporarios.
-- O armazenamento persistente de imagens em producao fica disponivel quando `CLOUDINARY_URL` esta configurada no ambiente da API.
+- Upload de imagem em producao salvou arquivo no Cloudinary e retornou URL publica `https://res.cloudinary.com/...`.
+- A URL publica da imagem enviada abriu com `200 image/png`.
 
 ## O Que Nao Funcionou ou Esta Pendente
 
-- O envio real de e-mail para recuperacao de senha depende das variaveis SMTP configuradas no ambiente de producao.
-- Para testar upload persistente em producao, configure `CLOUDINARY_URL` na Vercel e redeploye a API.
+- O fluxo de recuperacao de senha foi implementado, mas a entrega real do e-mail na caixa de entrada depende das variaveis SMTP corretas no ambiente de producao e de um remetente validado no provedor SMTP.
 - Ainda nao ha testes automatizados; os testes feitos foram manuais via curl, navegador e Swagger.
 
 ## Comandos de Validacao
