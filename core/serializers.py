@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, password_validation
 from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import serializers
@@ -261,29 +260,33 @@ class TrocaSenhaSerializer(serializers.Serializer):
 
 class SolicitarResetSenhaSerializer(serializers.Serializer):
     email = serializers.EmailField()
+    success_detail = "Se o e-mail existir, o link de recuperacao sera gerado no terminal do servidor."
 
     def save(self):
         user = User.objects.filter(email__iexact=self.validated_data["email"], is_active=True).first()
         if not user:
-            return {"detail": "Se o e-mail existir, enviaremos instrucoes de recuperacao."}
+            return {"detail": self.success_detail}
 
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
         reset_url = f"{settings.FRONTEND_URL}/redefinir-senha?uid={uid}&token={token}"
-        send_mail(
-            subject="Redefinicao de senha - PUC Encontra",
-            message=(
-                f"Ola, {user.get_full_name() or user.username}.\n\n"
-                "Recebemos uma solicitacao para redefinir sua senha no PUC Encontra.\n"
-                "Acesse o link abaixo para escolher uma nova senha:\n\n"
-                f"{reset_url}\n\n"
-                "Se voce nao solicitou essa alteracao, ignore este e-mail."
+        print(
+            "\n".join(
+                [
+                    "",
+                    "=== PUC Encontra: recuperacao de senha ===",
+                    f"Usuario: {user.username}",
+                    f"E-mail informado: {user.email}",
+                    f"UID: {uid}",
+                    f"Token: {token}",
+                    f"Link: {reset_url}",
+                    "=== fim da recuperacao de senha ===",
+                    "",
+                ]
             ),
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
-            fail_silently=False,
+            flush=True,
         )
-        response = {"detail": "Se o e-mail existir, enviaremos instrucoes de recuperacao."}
+        response = {"detail": self.success_detail}
         if settings.PASSWORD_RESET_EXPOSE_TOKEN:
             response["reset"] = {"uid": uid, "token": token}
         return response

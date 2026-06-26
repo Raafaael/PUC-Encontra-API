@@ -125,18 +125,8 @@ CORS_ALLOW_ALL_ORIGINS = DEBUG and not CORS_ALLOWED_ORIGINS
 
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://127.0.0.1:5173").rstrip("/")
 
-SMTP_HOST = os.getenv("SMTP_HOST", "")
-EMAIL_BACKEND = (
-    "django.core.mail.backends.smtp.EmailBackend"
-    if SMTP_HOST
-    else "django.core.mail.backends.console.EmailBackend"
-)
-EMAIL_HOST = SMTP_HOST
-EMAIL_PORT = int(os.getenv("SMTP_PORT", "587"))
-EMAIL_HOST_USER = os.getenv("SMTP_USER", "")
-EMAIL_HOST_PASSWORD = os.getenv("SMTP_PASS", "")
-EMAIL_USE_TLS = os.getenv("SMTP_USE_TLS", "True").lower() in {"1", "true", "yes", "on"}
-DEFAULT_FROM_EMAIL = os.getenv("SMTP_FROM", EMAIL_HOST_USER or "noreply@puc-encontra.local")
+# A recuperacao de senha imprime uid/token no terminal do servidor para a apresentacao.
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",

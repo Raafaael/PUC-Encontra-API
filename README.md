@@ -19,7 +19,7 @@ O backend foi desenvolvido em Django e Django REST Framework, sem HTML, CSS ou J
 - Cadastro, login, logout e consulta do usuario autenticado.
 - Troca de senha e fluxo de recuperacao de senha.
 - Desativacao de conta.
-- Envio de e-mail para recuperacao de senha via SMTP configuravel.
+- Recuperacao de senha com UID/token impressos no terminal do servidor.
 - CRUD de objetos perdidos e encontrados.
 - CRUD administrativo de categorias.
 - CRUD administrativo de locais.
@@ -113,12 +113,6 @@ CSRF_TRUSTED_ORIGINS=https://SEU-BACKEND.vercel.app
 SERVE_MEDIA=False
 PASSWORD_RESET_EXPOSE_TOKEN=False
 FRONTEND_URL=https://SEU-FRONTEND.vercel.app
-SMTP_HOST=smtp-relay.brevo.com
-SMTP_PORT=587
-SMTP_USER=seu_usuario_smtp
-SMTP_PASS=sua_senha_smtp
-SMTP_FROM=seu_email_remetente
-SMTP_USE_TLS=True
 ```
 
 Depois do primeiro deploy, rode as migracoes no banco de producao usando a mesma `DATABASE_URL`:
@@ -178,10 +172,9 @@ POST /api/auth/deactivate/
 
 Recuperacao de senha:
 
-- Se `SMTP_HOST` estiver configurado, a API envia um e-mail com link para `FRONTEND_URL/redefinir-senha`.
-- Se `SMTP_HOST` estiver vazio, o Django usa backend de console e imprime a mensagem no log do servidor.
+- A API nao envia e-mail real. O endpoint imprime no terminal do servidor o `uid`, o `token` e o link de redefinicao montado com `FRONTEND_URL`.
 - Em desenvolvimento, `PASSWORD_RESET_EXPOSE_TOKEN=True` tambem retorna `uid` e `token` na resposta para facilitar testes locais.
-- Em producao, use `PASSWORD_RESET_EXPOSE_TOKEN=False`.
+- Em producao, use `PASSWORD_RESET_EXPOSE_TOKEN=False` para nao retornar o token na resposta HTTP.
 
 Objetos:
 
@@ -228,15 +221,22 @@ Exemplo redoc
 
 ### O Que Foi Testado e Funcionou
 
-Testado localmente em 21/06/2026:
+Testado localmente em 26/06/2026:
 
 - `python manage.py check` sem erros.
 - Migracoes aplicadas com sucesso.
 - Seed executado com sucesso.
 - Swagger UI abre em `/api/docs/`.
 - Schema OpenAPI abre em `/api/schema/`.
+- ReDoc abre em `/api/redoc/`.
 - API raiz abre em `/api/`.
+- Recuperacao de senha imprime `uid`, `token` e link no terminal do servidor, sem envio de e-mail real.
+- Login com `admin` e `aluno1` retornou token.
 - CRUD de categorias testado com create, read, update e delete.
+- Criacao de objeto por usuario comum funcionou com upload de imagem local.
+- `/api/objetos/meus/` listou o objeto criado pelo usuario comum.
+- Filtros de objetos por busca, tipo, status ativo e status resolvido funcionaram.
+- Acao `marcar_resolvido` funcionou.
 - Endpoint protegido `/api/objetos/meus/` retorna `401` sem token.
 - Usuario admin acessa `/api/usuarios/`.
 - Usuario comum recebe `403` em `/api/usuarios/`.
@@ -259,7 +259,6 @@ Testado em producao na Vercel em 26/06/2026:
 
 ## O Que Nao Funcionou ou Esta Pendente
 
-- O fluxo de recuperacao de senha foi implementado, mas a entrega real do e-mail na caixa de entrada depende das variaveis SMTP corretas no ambiente de producao e de um remetente validado no provedor SMTP.
 - Ainda nao ha testes automatizados; os testes feitos foram manuais via curl, navegador e Swagger.
 
 ## Comandos de Validacao
