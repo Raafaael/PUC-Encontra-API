@@ -43,6 +43,7 @@ O backend foi desenvolvido em Django e Django REST Framework, sem HTML, CSS ou J
 - Token Authentication
 - Pillow para validacao de imagens
 - WhiteNoise para arquivos estaticos em ambientes de deploy
+- PostgreSQL em producao
 
 ## Instalacao Local
 
@@ -91,6 +92,36 @@ SERVE_MEDIA=True python manage.py runserver 127.0.0.1:8000
 ```
 
 O parametro `SERVE_MEDIA=True` permite abrir imagens enviadas para `/media/...` durante a demonstracao local.
+
+## Publicacao na Vercel
+
+O repositorio ja contem os arquivos necessarios para deploy na Vercel:
+
+- `api/index.py`: entrypoint WSGI usado pela Vercel.
+- `vercel.json`: build de arquivos estaticos e roteamento para a API Django.
+- `.python-version`: fixa Python 3.12.
+
+Crie um projeto separado na Vercel apontando para este repositorio e configure as variaveis:
+
+```env
+SECRET_KEY=coloque-uma-chave-grande-e-secreta
+DEBUG=False
+DATABASE_URL=postgres://usuario:senha@host:porta/banco?sslmode=require
+ALLOWED_HOSTS=SEU-BACKEND.vercel.app
+CORS_ALLOWED_ORIGINS=https://SEU-FRONTEND.vercel.app
+CSRF_TRUSTED_ORIGINS=https://SEU-BACKEND.vercel.app
+SERVE_MEDIA=False
+PASSWORD_RESET_EXPOSE_TOKEN=False
+```
+
+Depois do primeiro deploy, rode as migracoes no banco de producao usando a mesma `DATABASE_URL`:
+
+```bash
+python manage.py migrate
+python manage.py seed
+```
+
+Na Vercel, o upload de arquivos para `/media/` nao deve ser usado como armazenamento permanente. Para a entrega, mantenha `SERVE_MEDIA=False` em producao; as imagens locais continuam funcionando apenas na demonstracao local com `SERVE_MEDIA=True`.
 
 ## Usuarios de Teste
 
@@ -202,7 +233,7 @@ Testado localmente em 21/06/2026:
 
 - Publicacao em provedor web ainda nao foi realizada.
 - O envio real de e-mail para recuperacao de senha nao foi configurado; em desenvolvimento, o token de reset aparece na resposta para facilitar a demonstracao.
-- O armazenamento de imagens em producao ainda precisa ser configurado em um storage persistente do provedor escolhido.
+- O armazenamento persistente de imagens em producao ainda precisa de um storage externo. Na Vercel, o filesystem da Function nao deve ser usado para persistir uploads.
 - Ainda nao ha testes automatizados; os testes feitos foram manuais via curl, navegador e Swagger.
 
 ## Comandos de Validacao
